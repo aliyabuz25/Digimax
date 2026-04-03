@@ -1,5 +1,6 @@
 services:
   digimax:
+    container_name: digimax
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,6 +14,12 @@ services:
     volumes:
       - /datastore/digimax/data:/app/data
       - /datastore/digimax/uploads:/app/public/uploads
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/api/healthz']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     networks:
       - edge
     labels:
@@ -20,11 +27,26 @@ services:
       - 'traefik.docker.network=edge'
       - 'traefik.http.routers.digimax.rule=Host(`digimax.octotech.az`)'
       - 'traefik.http.routers.digimax.entrypoints=web'
+      - 'traefik.http.routers.digimax.service=digimax'
       - 'traefik.http.services.digimax.loadbalancer.server.port=3000'
       - 'traefik.http.routers.digimax-api.rule=(Host(`digimax.octotech.az`)) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))'
       - 'traefik.http.routers.digimax-api.entrypoints=web'
       - 'traefik.http.routers.digimax-api.priority=100'
+      - 'traefik.http.routers.digimax-api.service=digimax-api'
       - 'traefik.http.services.digimax-api.loadbalancer.server.port=3000'
+    deploy:
+      labels:
+        - 'traefik.enable=true'
+        - 'traefik.docker.network=edge'
+        - 'traefik.http.routers.digimax.rule=Host(`digimax.octotech.az`)'
+        - 'traefik.http.routers.digimax.entrypoints=web'
+        - 'traefik.http.routers.digimax.service=digimax'
+        - 'traefik.http.services.digimax.loadbalancer.server.port=3000'
+        - 'traefik.http.routers.digimax-api.rule=(Host(`digimax.octotech.az`)) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))'
+        - 'traefik.http.routers.digimax-api.entrypoints=web'
+        - 'traefik.http.routers.digimax-api.priority=100'
+        - 'traefik.http.routers.digimax-api.service=digimax-api'
+        - 'traefik.http.services.digimax-api.loadbalancer.server.port=3000'
 
 networks:
   edge:

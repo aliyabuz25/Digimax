@@ -93,6 +93,18 @@ curl -H "Host: digimax.octotech.az" http://127.0.0.1:8080/api/healthz
 docker ps | grep digimax
 ```
 
+Eger hala `404 page not found` goruyorsaniz:
+
+```bash
+docker inspect digimax --format '{{json .NetworkSettings.Networks}}'
+curl -H "Host: digimax.octotech.az" http://127.0.0.1:8080/api/healthz
+```
+
+Beklenen:
+
+- container `edge` network icinde olmali
+- `api/healthz` `200` donmeli
+
 ## 8. Kalici veri
 
 - SQLite DB: `/datastore/digimax/data`
