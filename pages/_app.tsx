@@ -1,4 +1,5 @@
 import '../styles/globals.css'
+import 'plyr/dist/plyr.css'
 import type { AppProps } from 'next/app'
 import { AuthProvider } from '../hooks/useAuth'
 import { RecoilRoot } from 'recoil'

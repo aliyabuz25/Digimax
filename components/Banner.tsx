@@ -17,27 +17,39 @@ function Banner({ netflixOriginals }: Props) {
   const [currentMovie, setCurrentMovie] = useRecoilState(movieState)
 
   useEffect(() => {
+    if (!netflixOriginals.length) {
+      setMovie(null)
+      return
+    }
+
     setMovie(
       netflixOriginals[Math.floor(Math.random() * netflixOriginals.length)]
     )
   }, [netflixOriginals])
 
+  const movieTitle =
+    movie?.title || movie?.name || movie?.original_name || 'Featured Title'
+  const imagePath = movie?.backdrop_path || movie?.poster_path
+  const imageSrc = imagePath ? `${baseUrl}${imagePath}` : '/login_background.jpg'
+
   return (
     <div className="flex flex-col space-y-2 py-16 md:space-y-4 lg:h-[65vh] lg:justify-end lg:pb-12">
       <div className="absolute top-0 left-0 -z-10 h-[95vh] w-screen">
         <Image
-          src={`${baseUrl}${movie?.backdrop_path || movie?.poster_path}`}
+          src={imageSrc}
           layout="fill"
           objectFit="cover"
-          alt="{movie?.title || movie?.name || movie?.original_name}"
+          priority
+          alt={movieTitle}
         />
       </div>
 
       <h1 className="text-2xl font-bold md:text-4xl lg:text-7xl">
-        {movie?.title || movie?.name || movie?.original_name}
+        {movieTitle}
       </h1>
       <p className="max-w-xs text-xs text-shadow-md md:max-w-lg md:text-lg lg:max-w-2xl lg:text-2xl">
-        {movie?.overview}
+        {movie?.overview ||
+          'Add your TMDB API key to load live content. The layout is working, but the banner is currently using a local fallback image.'}
       </p>
 
       <div className="flex space-x-3">
@@ -47,6 +59,10 @@ function Banner({ netflixOriginals }: Props) {
         <button
           className="bannerButton bg-[gray]/70"
           onClick={() => {
+            if (!movie) {
+              return
+            }
+
             setCurrentMovie(movie)
             setShowModal(true)
           }}

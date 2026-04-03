@@ -1,14 +1,10 @@
-import {
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signOut,
-  User,
-} from 'firebase/auth'
-
 import { useRouter } from 'next/router'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { auth } from '../firebase'
+
+interface User {
+  id: number
+  email: string
+}
 
 interface IAuth {
   user: User | null
@@ -35,65 +31,131 @@ interface AuthProviderProps {
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState<User | null>(null)
-  const [error, setError] = useState(null)
+  const [error, setError] = useState<string | null>(null)
   const [initialLoading, setInitialLoading] = useState(true)
   const router = useRouter()
 
-  // Persisting the user
-  useEffect(
-    () =>
-      onAuthStateChanged(auth, (user) => {
-        if (user) {
-          // Logged in...
-          setUser(user)
-          setLoading(false)
-        } else {
-          // Not logged in...
-          setUser(null)
-          setLoading(true)
-          router.push('/login')
+  useEffect(() => {
+    let active = true
+
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch('/api/auth/me')
+        const data = await response.json()
+
+        if (!active) {
+          return
         }
 
-        setInitialLoading(false)
-      }),
-    [auth]
-  )
+        if (response.ok && data.user) {
+          setUser(data.user)
+        } else {
+          setUser(null)
+          if (router.pathname !== '/login') {
+            router.push('/login')
+          }
+        }
+      } catch (fetchError) {
+        if (active) {
+          setUser(null)
+          if (router.pathname !== '/login') {
+            router.push('/login')
+          }
+        }
+      } finally {
+        if (active) {
+          setLoading(false)
+          setInitialLoading(false)
+        }
+      }
+    }
+
+    setLoading(true)
+    loadCurrentUser()
+
+    return () => {
+      active = false
+    }
+  }, [router])
 
   const signUp = async (email: string, password: string) => {
     setLoading(true)
+    setError(null)
 
-    await createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        setUser(userCredential.user)
-        router.push('/')
-        setLoading(false)
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       })
-      .catch((error) => alert(error.message))
-      .finally(() => setLoading(false))
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to sign up')
+      }
+
+      setUser(data.user)
+      router.push('/')
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error ? requestError.message : 'Unable to sign up'
+      setError(message)
+      alert(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const signIn = async (email: string, password: string) => {
     setLoading(true)
+    setError(null)
 
-    await signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        setUser(userCredential.user)
-        router.push('/')
-        setLoading(false)
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       })
-      .catch((error) => alert(error.message))
-      .finally(() => setLoading(false))
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Unable to sign in')
+      }
+
+      setUser(data.user)
+      router.push('/')
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error ? requestError.message : 'Unable to sign in'
+      setError(message)
+      alert(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const logout = async () => {
     setLoading(true)
+    setError(null)
 
-    signOut(auth)
-      .then(() => {
-        setUser(null)
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
       })
-      .catch((error) => alert(error.message))
-      .finally(() => setLoading(false))
+      setUser(null)
+      router.push('/login')
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error ? requestError.message : 'Unable to log out'
+      setError(message)
+      alert(message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const memoedValue = useMemo(
@@ -105,7 +167,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       logout,
       error,
     }),
-    [user, loading]
+    [user, loading, error]
   )
 
   return (
