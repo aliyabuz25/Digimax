@@ -1,0 +1,28 @@
+services:
+  digimax:
+    image: digimax:latest
+    restart: unless-stopped
+    environment:
+      PORT: '3000'
+      HOSTNAME: '0.0.0.0'
+      DATA_DIR: '/app/data'
+      PUBLIC_BASE_URL: ''
+    volumes:
+      - /datastore/digimax/data:/app/data
+      - /datastore/digimax/uploads:/app/public/uploads
+    networks:
+      - edge
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.docker.network=edge'
+      - 'traefik.http.routers.digimax.rule=Host(`tv.example.com`) || Host(`www.tv.example.com`)'
+      - 'traefik.http.routers.digimax.entrypoints=web'
+      - 'traefik.http.services.digimax.loadbalancer.server.port=3000'
+      - 'traefik.http.routers.digimax-api.rule=(Host(`tv.example.com`) || Host(`www.tv.example.com`)) && (PathPrefix(`/api`) || PathPrefix(`/uploads`))'
+      - 'traefik.http.routers.digimax-api.entrypoints=web'
+      - 'traefik.http.routers.digimax-api.priority=100'
+      - 'traefik.http.services.digimax-api.loadbalancer.server.port=3000'
+
+networks:
+  edge:
+    external: true
