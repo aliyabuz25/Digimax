@@ -1,5 +1,8 @@
 services:
   digimax:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: digimax:latest
     restart: unless-stopped
     environment:
