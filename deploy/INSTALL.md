@@ -71,10 +71,9 @@ Ornek kullanim:
 cat /datastore/digimax/app/deploy/portainer-stack.yml
 ```
 
-Stack dosyasi `edge` external network ve Traefik `web` entrypoint ile hazirlandi. Domainleri kendinize gore degistirin:
+Stack dosyasi `edge` external network ve Traefik `web` entrypoint ile hazirlandi. Bu repo icinde domain asagidaki gibi ayarlandi:
 
-- `tv.example.com`
-- `www.tv.example.com`
+- `digimax.octotech.az`
 
 ## 6. Cloudflared / DNS
 
@@ -89,8 +88,8 @@ DNS kaydi yoksa `ERR_NAME_NOT_RESOLVED` gorunur.
 ## 7. Test
 
 ```bash
-curl -H "Host: tv.example.com" http://127.0.0.1:8080/
-curl -H "Host: tv.example.com" http://127.0.0.1:8080/api/healthz
+curl -H "Host: digimax.octotech.az" http://127.0.0.1:8080/
+curl -H "Host: digimax.octotech.az" http://127.0.0.1:8080/api/healthz
 docker ps | grep digimax
 ```
 
